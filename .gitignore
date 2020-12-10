@@ -1,0 +1,9 @@
+.py[cod]
+.DS_Store
+__pycache__/
+*$py.class
+*.log
+db.sqlite3
+db.sqlite3-journal
+Pipfile
+.env
