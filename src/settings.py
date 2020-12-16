@@ -10,7 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+import os
+import sys
 from environ import Env, Path
+
+# Provide default values here. 
 
 env = Env(
     DEBUG=(bool, False)
@@ -19,6 +23,12 @@ env = Env(
 root = Path(__file__) - 2
 
 BASE_DIR = root()
+
+# Tell Django to look for apps in "apps" folder
+
+sys.path.append(os.path.join(BASE_DIR, 'apps'))
+
+# Get settings from environment variables.
 
 env.read_env('.env')
 
@@ -38,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.catalog'
+    'catalog'
 ]
 
 MIDDLEWARE = [
@@ -76,7 +86,8 @@ WSGI_APPLICATION = 'src.wsgi.application'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
-    'default': env.db()
+    'default': env.db(),
+    'extra': env.db('SQLITE_URL', default='sqlite:////tmp/my-tmp-sqlite.db')
 }
 
 # Password validation

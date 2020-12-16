@@ -4,27 +4,23 @@ from django.utils.translation import gettext_lazy as _
 
 
 
-class StatusModel(models.Model):
+class TimeStampedModel(models.Model):
     '''
-    Abstract model with timestamp and state fields.
+    Abstract model with created and updated auto fields.
     '''
     created = models.DateTimeField(_('created'), auto_now_add=True)
     updated = models.DateTimeField(_('updated'), auto_now=True)
-    active = models.BooleanField(_('active'), default=True)
-    featured = models.BooleanField(_('featured'), default=False)
 
     class Meta:
         abstract = True
 
 
-
-class TitleDescriptionModel(models.Model):
+class SlugFromTitleModel(models.Model):
     '''
     Abstract model with title, description, and "auto-slug" field.  
     '''
-    title = models.CharField(_('title'), max_length=255)
+    title = models.CharField(_('title'), max_length=255, unique=True)
     slug = models.SlugField(_('slug'), blank=True, unique=True, editable=False)
-    description = models.TextField(_('description'), blank=True, default='No description provided.')
 
     class Meta: 
         abstract = True
@@ -33,6 +29,7 @@ class TitleDescriptionModel(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        # TODO: is it enough? 
         if not self.slug:
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
