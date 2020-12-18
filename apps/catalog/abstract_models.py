@@ -17,13 +17,6 @@ class AbstractProduct(TimeStampedModel, SlugFromTitleModel):
         related_query_name='%(class)s',
         verbose_name = _('related categories')
     )
-    stockrecord = models.OneToOneField(
-        'warehouse.StockRecord',
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='product',
-        verbose_name=_('stock record')
-    )
 
     class Meta: 
         abstract = True

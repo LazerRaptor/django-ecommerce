@@ -3,7 +3,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from .abstract_models import AbstractProduct
-from utils.models import SlugFromTitleModel
+from utils.db.models import SlugFromTitleModel
 
 
 
