@@ -55,10 +55,12 @@ class StockRecord(TimeStampedModel):
     content_type = models.ForeignKey(
         ContentType, 
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         verbose_name=_('content type')
     )
-    product_object_id = models.PositiveIntegerField()
-    product_object = GenericForeignKey('content_type', 'product_object_id')
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
 
     delta = models.IntegerField(
         _('delta'), 
@@ -70,13 +72,19 @@ class StockRecord(TimeStampedModel):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q((basket=None | supplier=None) & (basket!=None | supplier!=None)),
+                check=(
+                    models.Q(
+                        basket__isnull=True,
+                        supplier__isnull=False,
+                        delta__gt=0
+                    ) | models.Q(
+                        basket__isnull=False,
+                        supplier__isnull=True,
+                        delta__lt=0
+                    )
+                ),
                 name='mutual_exclusion'
             ),
-            models.CheckConstraint(
-                check=models.Q((basket!=None & delta<0) & (supplier!=None & delta>0)),
-                name='delta_sign'
-            )
         ]
 
     def __str__(self):
