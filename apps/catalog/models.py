@@ -33,10 +33,8 @@ class Category(SlugFromTitleModel, MPTTModel):
         return self.is_leaf_node()
 
 
-
 class AbstractModelNode(Node):
     pass
-
 
 
 class Book(AbstractProduct):

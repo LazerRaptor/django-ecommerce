@@ -5,20 +5,17 @@ from django.core.exceptions import ImproperlyConfigured
 
 
 class MergedQueryset(object):
-
     def __init__(self, model):
         if not model._meta.abstract:
             raise ImproperlyConfigured("Provided model must be abstract")
         self.model = model
         self.app_label = model._meta.app_label
 
-
     def _get_descendant_models(self):
         app_models = apps.get_app_config(self.app_label).get_models()
         child_models = (m for m in app_models if issubclass(m, self.model))
         return child_models
     
-
     def get_merged_queryset(self):
         fields = self.model._meta.get_fields() 
         field_names = [field.name for field in fields]
