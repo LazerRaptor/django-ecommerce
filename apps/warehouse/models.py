@@ -11,7 +11,8 @@ class Supplier(models.Model):
     '''
     Concrete model that describes suppliers.
     '''
-    pass
+    title = models.CharField(_('title'), max_length=127)
+    address = models.CharField(_('address'), max_length=255)
 
 
 class StockRecordManager(models.Manager):
@@ -38,7 +39,7 @@ class StockRecord(TimeStampedModel):
     Concrete model that holds information about restocking and realization of products. 
     '''
     supplier = models.ForeignKey(
-        'Supplier',
+        Supplier,
         on_delete=models.CASCADE,
         null = True,
         blank = True,
@@ -88,7 +89,7 @@ class StockRecord(TimeStampedModel):
         ]
 
     def __str__(self):
-        return f'{self.delta} of {self.product}'
+        return f'{self.product} | {self.delta}'
 
 
 

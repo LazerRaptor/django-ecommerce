@@ -2,8 +2,8 @@ from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-from .abstract_models import AbstractProduct
-from utils.db.models import SlugFromTitleModel
+from .abstract_models import AbstractProduct, AbstractClothing
+from utils.db.models import SlugFromTitleModel, Node
 
 
 
@@ -34,6 +34,11 @@ class Category(SlugFromTitleModel, MPTTModel):
 
 
 
+class AbstractModelNode(Node):
+    pass
+
+
+
 class Book(AbstractProduct):
     SOFT, HARD, EBOOK = 'S', 'H', 'E'
     BOOK_FORMAT_CHOICES = [
@@ -48,3 +53,17 @@ class Book(AbstractProduct):
     class Meta:
         verbose_name = _('book')
         verbose_name_plural = _('books')
+
+
+class Bike(AbstractProduct):
+    ROAD, CRUISER, MOUNTAIN = 'R', 'C', 'M'
+    BIKE_TYPE_CHOICES = [
+        (ROAD, _('Road bike')),
+        (CRUISER, _('Cruiser bike')),
+        (MOUNTAIN, _('Mountain bike'))
+    ]
+    bike_type = models.CharField(_('bike\'s type'), max_length=1, choices=BIKE_TYPE_CHOICES)
+
+
+class Hat(AbstractClothing):
+    color = models.CharField(max_length=120, default='red')

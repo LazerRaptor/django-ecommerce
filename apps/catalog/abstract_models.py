@@ -27,8 +27,17 @@ class AbstractProduct(TimeStampedModel, SlugFromTitleModel):
 
     class Meta: 
         abstract = True
+    
+    @property
+    def resource_type(self):
+        return self._meta.model_name
 
 
+class AbstractClothing(AbstractProduct):
+    def foo(self):
+        return 'bar'
 
+    class Meta: 
+        abstract = True
 
 
