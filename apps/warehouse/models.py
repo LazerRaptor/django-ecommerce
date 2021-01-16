@@ -3,7 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
 from django.utils.functional import cached_property
-from utils.db.models import SlugFromTitleModel, TimeStampedModel
+from utils.models import SlugFromTitleModel, TimeStampedModel
 
 
 

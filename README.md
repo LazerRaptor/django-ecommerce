@@ -19,7 +19,5 @@ rec = StockRecord.objects.create('delta')
 
 
 
-### TODO: 
-1. add tests for TreeNode manager
-2. add get_descendants() & get_ancestors() methods to the Node model
-3. add get_queryset() method to the TreeNode manager and the likes. 
+### Notes: 
+1. TreeManager needs refactoring

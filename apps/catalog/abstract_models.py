@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.fields import GenericRelation
-from utils.db.models import TimeStampedModel, SlugFromTitleModel
 from django.utils.translation import gettext_lazy as _
+from utils.models import TimeStampedModel, SlugFromTitleModel
 from warehouse.models import StockRecord
 
 

@@ -1,9 +1,9 @@
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-from collections import deque
-from typing import Type
-
+from .managers import TreeManager
+from .exceptions import NotConcreteModel
 
 
 class TimeStampedModel(models.Model):
@@ -38,48 +38,16 @@ class SlugFromTitleModel(models.Model):
         super().save(*args, **kwargs)
 
 
-class TreeManager(models.Manager):
-    def rebuild(self, base_model: Type[models.Model]) -> None:
-        '''
-        Creates a tree representation for a class hierarchy.
-        base_model argument should be a subclass of Django's Model class. 
-        It becomes the root node for the tree, from there we drill down to its leaves 
-        (that are supposedly concrete models, unlike root and branch nodes).
-        '''
-        assert issubclass(base_model, models.Model), (
-            f'{base_model} is not a model'
-        )
-        
-        # clear tree
-        self.all().delete()
-
-        queue = deque([
-            (base_mode, None)
-        ])
-        
-        self._traverse(queue)
 
 
-    def _traverse(self, queue: deque) -> None:
-        try:
-            model, parent_node = queue.pop()
-        except IndexError:
-            print('Tree traversal complete')
-        
-        node, created = self.get_or_create(
-            app_label=model._meta.app_label,
-            model_name=model._meta.model_name,
-            parent=parent_node
-        )
-        for subclass in model.__subclasses__():
-            queue.append(
-                (subclass, node)
-            )
-            self._traverse(queue)
 
 
 
 class Node(models.Model):
+    '''
+    Notice that 'lft' attribute is used as a primary key. This is potentially bad if we decide to 
+    expand the functionality.  
+    '''
     model_name = models.CharField(_('model\'s name'), max_length=120)
     app_label = models.CharField(_('application\'s label'), max_length=120)
     parent = models.ForeignKey(
@@ -88,15 +56,36 @@ class Node(models.Model):
         blank=True, 
         null=True, 
         related_name="children", 
-        verbose_name=_('parent')
+        verbose_name=_('parent'),
+        editable=False
     )
+    lft = models.PositiveIntegerField(_('left'), primary_key=True, editable=False)
+    rgt = models.PositiveIntegerField(_('right'), unique=True, editable=False)
     objects = TreeManager()
+
 
     class Meta:
         abstract = True
         unique_together = ['model_name', 'app_label']
 
+
     def __str__(self):
         return f'{self.app_label} | {self.model_name}'
+
+
+    def get_model(self):
+        ct = ContentType.objects.get(
+            app_label=self.app_label, model=self.model_name)
+        return ct.model_class()
+
+
+    @property
+    def is_root(self):
+        return self.parent is None
+
+
+    @property
+    def is_leaf(self):
+        return self.rgt - self.lft == 1
 
 

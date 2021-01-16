@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
-from utils.db.models import TimeStampedModel
+from utils.models import TimeStampedModel
 from django.utils.translation import gettext_lazy as _
 
 

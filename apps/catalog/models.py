@@ -3,8 +3,12 @@ from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from .abstract_models import AbstractProduct, AbstractClothing
-from utils.db.models import SlugFromTitleModel, Node
+from utils.models import SlugFromTitleModel, Node
 
+
+
+class ModelNode(Node):
+    pass
 
 
 class Category(SlugFromTitleModel, MPTTModel):
@@ -32,9 +36,6 @@ class Category(SlugFromTitleModel, MPTTModel):
     def is_leaf_node(self):
         return self.is_leaf_node()
 
-
-class AbstractModelNode(Node):
-    pass
 
 
 class Book(AbstractProduct):
