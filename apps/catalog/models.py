@@ -3,12 +3,15 @@ from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from .abstract_models import AbstractProduct, AbstractClothing
-from utils.models import SlugFromTitleModel, Node
+from core.models import Node
+from utils.models import SlugFromTitleModel
 
 
 
-class ModelNode(Node):
-    pass
+class ProductTree(Node):
+
+    class TreeMeta:
+        base_model = AbstractProduct
 
 
 class Category(SlugFromTitleModel, MPTTModel):

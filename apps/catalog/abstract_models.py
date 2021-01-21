@@ -34,8 +34,6 @@ class AbstractProduct(TimeStampedModel, SlugFromTitleModel):
 
 
 class AbstractClothing(AbstractProduct):
-    def foo(self):
-        return 'bar'
 
     class Meta: 
         abstract = True
