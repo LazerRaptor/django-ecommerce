@@ -4,7 +4,23 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
 from django.utils.functional import cached_property
 from utils.models import SlugFromTitleModel, TimeStampedModel
+from catalog.models import ProductTreeNode
 
+
+
+def limit_content_types():
+    '''
+    Limit choices to the concrete models of the Product (abstract)
+    class tree.
+    '''
+    leaves = ProductTreeNode.objects.get_leaves()
+    model_names = [leaf.model_name for leaf in leaves]
+    q = models.Q()
+
+    for name in model_names:
+        q |= models.Q(model=name)
+
+    return q
 
 
 class Supplier(models.Model):
@@ -13,6 +29,13 @@ class Supplier(models.Model):
     '''
     title = models.CharField(_('title'), max_length=127)
     address = models.CharField(_('address'), max_length=255)
+
+    class Meta: 
+        verbose_name = _('Supplier')
+        verbose_name_plural = _('Suppliers')
+
+    def __str__(self):
+        return self.title
 
 
 class StockRecordManager(models.Manager):
@@ -52,17 +75,16 @@ class StockRecord(TimeStampedModel):
         blank=True,
         verbose_name=_('basket')
     )
-    # Generic relationship to AbstractProduct model's children
     content_type = models.ForeignKey(
         ContentType, 
         on_delete=models.CASCADE,
         null=True,
         blank=True,
+        limit_choices_to=limit_content_types,
         verbose_name=_('content type')
     )
     object_id = models.PositiveIntegerField(null=True, blank=True)
     content_object = GenericForeignKey('content_type', 'object_id')
-
     delta = models.IntegerField(
         _('delta'), 
         help_text=_(
@@ -71,6 +93,8 @@ class StockRecord(TimeStampedModel):
     )
 
     class Meta:
+        verbose_name = _('Stock Record')
+        verbose_name_plural = _('Stock Records')
         constraints = [
             models.CheckConstraint(
                 check=(
@@ -89,7 +113,9 @@ class StockRecord(TimeStampedModel):
         ]
 
     def __str__(self):
-        return f'{self.product} | {self.delta}'
+        return f'{self.content_object} ({self.delta})'
+
+
 
 
 

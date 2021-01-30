@@ -8,10 +8,15 @@ from utils.models import SlugFromTitleModel
 
 
 
-class ProductTree(Node):
+class ProductTreeNode(Node):
 
+    class Meta:
+        verbose_name = _('Product Tree Node')
+        verbose_name_plural = _('Product Tree Nodes')
+        
     class TreeMeta:
         base_model = AbstractProduct
+
 
 
 class Category(SlugFromTitleModel, MPTTModel):

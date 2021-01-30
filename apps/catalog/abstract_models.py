@@ -2,8 +2,6 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.translation import gettext_lazy as _
 from utils.models import TimeStampedModel, SlugFromTitleModel
-from warehouse.models import StockRecord
-
 
 
 class AbstractProduct(TimeStampedModel, SlugFromTitleModel):
@@ -20,17 +18,14 @@ class AbstractProduct(TimeStampedModel, SlugFromTitleModel):
         verbose_name = _('related categories')
     )
     stockrecords = GenericRelation(
-        StockRecord,
+        'warehouse.StockRecord',
         related_query_name='%(class)s',
         verbose_name=_('stock records')
     )
 
     class Meta: 
         abstract = True
-    
-    @property
-    def resource_type(self):
-        return self._meta.model_name
+
 
 
 class AbstractClothing(AbstractProduct):

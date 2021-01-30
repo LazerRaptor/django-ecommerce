@@ -21,3 +21,5 @@ rec = StockRecord.objects.create('delta')
 
 ### Notes: 
 1. TreeManager needs refactoring
+2. To run rebuild() method create a management command and then run that command from code (figure out what triggers it)
+3. 

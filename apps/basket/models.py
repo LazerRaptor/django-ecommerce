@@ -29,5 +29,9 @@ class Basket(TimeStampedModel, models.Model):
         _('Status'), max_length=15, default='Open', choices=STATUS_CHOICES
     )
 
+    class Meta:
+        verbose_name = _('Basket')
+        verbose_name_plural = _('Baskets')
+
     def __str__(self):
         return str(self.id)

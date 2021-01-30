@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import StockRecord, Supplier
 
-# Register your models here.
+
+
+admin.site.register(StockRecord)
+admin.site.register(Supplier)
