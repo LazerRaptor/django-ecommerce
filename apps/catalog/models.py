@@ -1,21 +1,8 @@
 from django.db import models
-from mptt.models import MPTTModel, TreeForeignKey
-from django.utils.text import slugify
+from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.translation import gettext_lazy as _
-from .abstract_models import AbstractProduct, AbstractClothing
-from core.models import Node
-from utils.models import SlugFromTitleModel
-
-
-
-class ProductTreeNode(Node):
-
-    class Meta:
-        verbose_name = _('Product Tree Node')
-        verbose_name_plural = _('Product Tree Nodes')
-        
-    class TreeMeta:
-        base_model = AbstractProduct
+from mptt.models import MPTTModel, TreeForeignKey
+from utils.models import TimeStampedModel, SlugFromTitleModel
 
 
 
@@ -40,37 +27,22 @@ class Category(SlugFromTitleModel, MPTTModel):
     def __str__(self):
         return self.title
 
-    @property 
-    def is_leaf_node(self):
-        return self.is_leaf_node()
+
+
+class Product(TimeStampedModel, SlugFromTitleModel):
+    price = models.DecimalField(_('price'), max_digits=12, decimal_places=2)
+    description = models.TextField(_('description'), blank=True, default='Description is not provided')
+    active = models.BooleanField(default=True)
+    featured = models.BooleanField(default=False)
+    category = models.ForeignKey(
+        'catalog.Category', 
+        on_delete=models.SET_NULL, 
+        null=True,
+        related_name='%(class)s_related',
+        related_query_name='%(class)s',
+        verbose_name = _('related categories')
+    )
+    extra = models.JSONField(_('extra attributes as JSON'), null=True, blank=True)
 
 
 
-class Book(AbstractProduct):
-    SOFT, HARD, EBOOK = 'S', 'H', 'E'
-    BOOK_FORMAT_CHOICES = [
-        (SOFT, _('soft cover')),
-        (HARD, _('hard cover')),
-        (EBOOK, _('eBook'))
-    ]
-    length = models.IntegerField(_('number of pages'))
-    author = models.CharField(_('author'), max_length=255)
-    book_format = models.CharField(_('book_format'), max_length=1, choices=BOOK_FORMAT_CHOICES)
-
-    class Meta:
-        verbose_name = _('book')
-        verbose_name_plural = _('books')
-
-
-class Bike(AbstractProduct):
-    ROAD, CRUISER, MOUNTAIN = 'R', 'C', 'M'
-    BIKE_TYPE_CHOICES = [
-        (ROAD, _('Road bike')),
-        (CRUISER, _('Cruiser bike')),
-        (MOUNTAIN, _('Mountain bike'))
-    ]
-    bike_type = models.CharField(_('bike\'s type'), max_length=1, choices=BIKE_TYPE_CHOICES)
-
-
-class Hat(AbstractClothing):
-    color = models.CharField(max_length=120, default='red')

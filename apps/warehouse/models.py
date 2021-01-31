@@ -1,26 +1,7 @@
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
-from django.utils.functional import cached_property
-from utils.models import SlugFromTitleModel, TimeStampedModel
-from catalog.models import ProductTreeNode
+from utils.models import TimeStampedModel
 
-
-
-def limit_content_types():
-    '''
-    Limit choices to the concrete models of the Product (abstract)
-    class tree.
-    '''
-    leaves = ProductTreeNode.objects.get_leaves()
-    model_names = [leaf.model_name for leaf in leaves]
-    q = models.Q()
-
-    for name in model_names:
-        q |= models.Q(model=name)
-
-    return q
 
 
 class Supplier(models.Model):
@@ -37,24 +18,6 @@ class Supplier(models.Model):
     def __str__(self):
         return self.title
 
-
-class StockRecordManager(models.Manager):
-
-    def get_queryset(self):
-        return super().get_queryset()
-
-    def stocked(self):
-        '''
-        Queryset of product models' instances whose cumulative delta of 
-        related stockrecords is positive.  
-        '''
-        pass 
-
-    def out_of_stock(self):
-        pass
-    
-    def check_availability(self, name):
-        pass
 
 
 class StockRecord(TimeStampedModel):
@@ -75,16 +38,11 @@ class StockRecord(TimeStampedModel):
         blank=True,
         verbose_name=_('basket')
     )
-    content_type = models.ForeignKey(
-        ContentType, 
+    product = models.ForeignKey(
+        'catalog.Product',
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        limit_choices_to=limit_content_types,
-        verbose_name=_('content type')
+        verbose_name=_('product')
     )
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    content_object = GenericForeignKey('content_type', 'object_id')
     delta = models.IntegerField(
         _('delta'), 
         help_text=_(

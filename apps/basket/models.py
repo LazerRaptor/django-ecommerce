@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 User = settings.AUTH_USER_MODEL
 
 
-class Basket(TimeStampedModel, models.Model):
+class Basket(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(
         User,
