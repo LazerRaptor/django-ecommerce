@@ -17,6 +17,12 @@ class Basket(TimeStampedModel):
         on_delete=models.CASCADE,
         verbose_name=_('owner')
     )
+    products = models.ManyToManyField(
+        'catalog.Product',
+        through='BasketProduct',
+        through_fields=('basket', 'product'),
+        verbose_name=_('products')
+    )
     OPEN, SAVED, SUBMITTED = (
         'Open', 'Saved', 'Submitted'
     )
@@ -35,3 +41,25 @@ class Basket(TimeStampedModel):
 
     def __str__(self):
         return str(self.id)
+
+
+    
+class BasketProduct(TimeStampedModel):
+    '''
+    Through model for ManyToMany relationship between
+    Product (target) and Basket (source) models. 
+    '''
+    product = models.ForeignKey(
+        'catalog.Product',
+        on_delete=models.CASCADE,
+        verbose_name=_('product')
+    )
+    basket = models.ForeignKey(
+        'Basket', 
+        on_delete=models.CASCADE,
+        verbose_name=_('basket')
+    )
+    quantity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f'{self.product} ({self.quantity})'

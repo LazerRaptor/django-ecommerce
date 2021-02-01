@@ -1,16 +1,15 @@
 from django.contrib import admin
-from .models import Basket
-from warehouse.models import StockRecord
+from .models import Basket, BasketProduct
 
 
 
-class StockRecordInline(admin.TabularInline):
-    model = StockRecord
+class BasketProductInline(admin.TabularInline):
+    model = BasketProduct
 
 
 class BasketAdmin(admin.ModelAdmin):
     inlines = [
-        StockRecordInline
+        BasketProductInline
     ]
 
 
