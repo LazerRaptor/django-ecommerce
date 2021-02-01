@@ -1,8 +1,24 @@
 from rest_framework import serializers
+from .models import Product, Category
 
 
 
-class BaseSerializer(serializers.Serializer):
-    title = serializers.CharField(max_length=255)
-    slug = serializers.SlugField()
-    price = serializers.DecimalField(max_digits=12, decimal_places=2)
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = (
+            'title',
+            'slug',
+            'price',
+            'description',
+            'category',
+            'featured',
+            'extra'
+        )
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ('title', 'slug', 'parent')
+    

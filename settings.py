@@ -20,7 +20,7 @@ env = Env(
     DEBUG=(bool, False)
 )
 
-root = Path(__file__) - 2
+root = Path(__file__) - 1
 
 BASE_DIR = root()
 
@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # third party
+    'rest_framework',
     # internal apps
     'basket',
     'catalog',
@@ -64,7 +66,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'src.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATES = [
     {
@@ -82,7 +84,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'src.wsgi.application'
+WSGI_APPLICATION = 'wsgi.application'
 
 
 # Database

@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.translation import gettext_lazy as _
 from mptt.models import MPTTModel, TreeForeignKey
 from utils.models import TimeStampedModel, SlugFromTitleModel
+from .managers import ProductManager
 
 
 
@@ -43,6 +44,5 @@ class Product(TimeStampedModel, SlugFromTitleModel):
         verbose_name = _('related categories')
     )
     extra = models.JSONField(_('extra attributes as JSON'), null=True, blank=True)
-
-
+    objects = ProductManager()
 
