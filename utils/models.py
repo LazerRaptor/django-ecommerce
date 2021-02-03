@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from django_extensions.db.fields import AutoSlugField
 from django.utils.translation import gettext_lazy as _
 
 
@@ -21,7 +22,13 @@ class SlugFromTitleModel(models.Model):
     Abstract model with title, description, and "auto-slug" field.  
     '''
     title = models.CharField(_('title'), max_length=255, unique=True)
-    slug = models.SlugField(_('slug'), blank=True, unique=True, editable=False)
+    slug = AutoSlugField(
+        _('slug'),
+        populate_from=['title',],
+        blank=True, 
+        unique=True, 
+        editable=False
+    )
 
     class Meta: 
         abstract = True

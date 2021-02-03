@@ -24,7 +24,7 @@ class Basket(TimeStampedModel):
         verbose_name=_('products')
     )
     OPEN, SAVED, SUBMITTED = (
-        'Open', 'Saved', 'Submitted'
+        'open', 'saved', 'submitted'
     )
     STATUS_CHOICES = (
         (OPEN, _('Open - active basket')),

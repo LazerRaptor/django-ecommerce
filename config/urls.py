@@ -21,7 +21,8 @@ from catalog import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('catalog.urls'))
+    path('api/', include('catalog.urls')),
+    path('auth/', include('djoser.urls'))
 ]
 
 

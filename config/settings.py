@@ -20,7 +20,7 @@ env = Env(
     DEBUG=(bool, False)
 )
 
-root = Path(__file__) - 1
+root = Path(__file__) - 2
 
 BASE_DIR = root()
 
@@ -50,7 +50,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # third party
     'rest_framework',
+    'djoser',
     # internal apps
+    'accounts',
     'basket',
     'catalog',
     'warehouse',
@@ -66,7 +68,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -94,6 +96,8 @@ DATABASES = {
     'default': env.db(),
     'extra': env.db('SQLITE_URL', default='sqlite:////tmp/my-tmp-sqlite.db')
 }
+
+AUTH_USER_MODEL = 'accounts.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
