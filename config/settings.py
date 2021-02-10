@@ -13,22 +13,22 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 import sys
 from environ import Env, Path
+from .aws.conf import *
 
-# Provide default values here. 
 
+# Provide default values here 
 env = Env(
     DEBUG=(bool, False)
 )
-
 root = Path(__file__) - 2
 
 BASE_DIR = root()
 
 # Tell Django to look for apps in "apps" folder
-
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
-# Get settings from environment variables.
+
+# Get settings from environment variables
 
 env.read_env('.env')
 
@@ -37,6 +37,10 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = []
+
+STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY')
+
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 
 
 # Application definition
@@ -51,9 +55,12 @@ INSTALLED_APPS = [
     # third party
     'rest_framework',
     'djoser',
+    'django_filters',
+    'storages',
     # internal apps
     'accounts',
     'basket',
+    'checkout',
     'catalog',
     'warehouse',
 ]
@@ -117,6 +124,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Django REST Framework settings
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
@@ -136,3 +150,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static', 'media')
+

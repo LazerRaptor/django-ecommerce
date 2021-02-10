@@ -15,24 +15,22 @@ class Basket(TimeStampedModel):
         null=True,
         blank=True,
         on_delete=models.CASCADE,
+        related_name='baskets',
         verbose_name=_('owner')
     )
     products = models.ManyToManyField(
         'catalog.Product',
-        through='BasketProduct',
+        through='ProductArray',
         through_fields=('basket', 'product'),
         verbose_name=_('products')
     )
-    OPEN, SAVED, SUBMITTED = (
-        'open', 'saved', 'submitted'
-    )
+    OPEN, SUBMITTED = ('open', 'submitted')
     STATUS_CHOICES = (
         (OPEN, _('Open - active basket')),
-        (SAVED, _('Saved for later')),
         (SUBMITTED, _('Submitted - items has been purchased'))
     )
     status = models.CharField(
-        _('Status'), max_length=15, default='Open', choices=STATUS_CHOICES
+        _('Status'), max_length=15, default='open', choices=STATUS_CHOICES
     )
 
     class Meta:
@@ -44,10 +42,11 @@ class Basket(TimeStampedModel):
 
 
     
-class BasketProduct(TimeStampedModel):
+class ProductArray(TimeStampedModel):
     '''
     Through model for ManyToMany relationship between
-    Product (target) and Basket (source) models. 
+    Product (target) and Basket (source) models. Represents
+    a number of same products added to a basket.
     '''
     product = models.ForeignKey(
         'catalog.Product',
@@ -55,11 +54,11 @@ class BasketProduct(TimeStampedModel):
         verbose_name=_('product')
     )
     basket = models.ForeignKey(
-        'Basket', 
+        'basket.Basket', 
         on_delete=models.CASCADE,
         verbose_name=_('basket')
     )
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(_('quantity'), default=1)
 
     def __str__(self):
         return f'{self.product} ({self.quantity})'

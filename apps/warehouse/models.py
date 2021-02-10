@@ -29,6 +29,7 @@ class StockRecord(TimeStampedModel):
         on_delete=models.CASCADE,
         null = True,
         blank = True,
+        related_name='stockrecords',
         verbose_name=_('supplier')
     )
     basket = models.ForeignKey(
@@ -36,11 +37,13 @@ class StockRecord(TimeStampedModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
+        related_name='stockrecords',
         verbose_name=_('basket')
     )
     product = models.ForeignKey(
         'catalog.Product',
         on_delete=models.CASCADE,
+        related_name='stockrecords',
         verbose_name=_('product')
     )
     delta = models.IntegerField(

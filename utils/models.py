@@ -36,11 +36,6 @@ class SlugFromTitleModel(models.Model):
     def __str__(self):
         return self.title
 
-    def save(self, *args, **kwargs):
-        # TODO: is it ok? 
-        if not self.slug:
-            self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
            
 
 
