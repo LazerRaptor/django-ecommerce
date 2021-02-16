@@ -2,6 +2,7 @@ from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.decorators import action
 from .models import Product, Category
 from django_filters import rest_framework as filters
@@ -16,14 +17,15 @@ class ProductFilter(filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = ['category', 'min_price', 'max_price']
+        fields = ['category', 'featured', 'min_price', 'max_price']
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
-    
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+
     @action(detail=True, methods=['get',], url_path='content')
     def category_content(self, request, pk=None):
         '''
@@ -44,25 +46,65 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
         products = Product.objects.filter(query)
         serializer = ProductSerializer(products, many=True)
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+class CategoryTreeView(APIView):
+    '''
+    Returns all categories as a tree view
+    '''
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    
+    @staticmethod
+    def build_tree(nodes):
+        # FIXME: This is terrible
+
+        def traverse(nodes):
+            tree = []
+            for node in nodes:
+                d = node.copy()
+                children = [x for x in nodes if x['parent'] == node['id']]
+                children = traverse(children)
+                d['children'] = children
+                tree.append(d)
+            return tree 
+
+        def remove_parent(nodes):
+            for n in nodes:
+                n.pop("parent")
+                if len(n["children"]) > 0:
+                    remove_parent(n["children"])
+            return nodes
+
+        nodes = traverse(nodes)
+        tree = [n for n in nodes if n['parent'] is None]
+
+        return remove_parent(tree)
+            
+    
+    def get(self, request, format=None):
+        queryset = Category.objects.all()
+        serializer = CategorySerializer(queryset, many=True)
+        tree = self.build_tree(serializer.data)
+        return Response(tree)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = 'slug'
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     filterset_class = ProductFilter
-
 
 
 class ProductStaticPaths(APIView):
     '''
     Returns a list of slugs, required for Next.js SSG
     '''
-    def get(self, request, format=None):
-        slugs = Product.objects.slugs()
-        serializer = ProductSlugSerializer(slugs)
+    renderers = [JSONRenderer, BrowsableAPIRenderer]
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get(self, request, format=None):
+        qs = Product.objects.slugs()
+
+        return Response(qs, status=status.HTTP_200_OK)
 
