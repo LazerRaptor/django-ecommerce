@@ -8,6 +8,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
     class Meta: 
         model = ProductImage
         fields = (
+            'id',
             'product', 
             'src', 
             'alt', 

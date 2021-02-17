@@ -18,7 +18,7 @@ class ProductManager(models.Manager):
         self.bulk_create(instance_list)
     
     
-    # silly methods for simplifying populating the model with dummy instances 
+    # silly methods for populating the model with dummy data
     
     def populate_dummy(self, object_list: list):
         objs = [self._mutate_obj(obj) for obj in object_list]

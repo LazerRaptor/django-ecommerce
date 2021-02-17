@@ -12,7 +12,7 @@ User = settings.AUTH_USER_MODEL
 
 class Order(LifecycleModel):
     '''
-    
+    TODO: add description
     '''
     uuid = RandomCharField(_('order number'), length=12, unique=True)
     customer = models.ForeignKey(

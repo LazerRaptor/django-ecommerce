@@ -82,9 +82,7 @@ class ProductArrayDetailAPIView(APIView):
         )
         string_repr = obj.__str__()
         obj.delete()
-        data = {
-            "message": _('{} has been removed'.format(string_repr))
-        }
+        data = _('{} has been removed'.format(string_repr))
 
         return Response(data=data, status=status.HTTP_200_OK)
 

@@ -5,7 +5,6 @@ from catalog.serializers import NestedProductSerializer
 
 
 class BasketSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = Basket
         fields = (
