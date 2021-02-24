@@ -14,3 +14,4 @@ class BasketAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Basket, BasketAdmin)
+admin.site.register(ProductArray)

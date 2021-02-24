@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -22,26 +23,34 @@ class ProductFilter(filters.FilterSet):
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    lookup_field = 'slug'
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    lookup_field = 'slug'
+
+    def list(self, request, format=None):
+        queryset = Category.objects.all()
+        serializer = CategorySerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, slug, format=None):
+        queryset = Category.objects.all()
+        obj = get_object_or_404(queryset, slug=slug)
+        serializer = CategorySerializer(obj)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get',], url_path='content')
-    def category_content(self, request, pk=None):
+    def category_content(self, request, slug, format=None):
         '''
         Get reverse related products for a given category. If the category is a 
         parent node, we include products that are reverse related to its descendants.
         '''
-        try:
-            category_obj = Category.objects.get(id=pk)
-        except Category.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND, data="Category not found")
+        category_obj = get_object_or_404(Category, slug=slug)
         
         if category_obj.is_leaf_node():
-            query = Q(category_id=pk)
+            query = Q(category_id=category_obj.id)
         else:
             descendants_id_list = [
-                desc.id for desc in category_obj.get_descendants(include_self=True)]
+                desc.id for desc in category_obj.get_descendants(include_self=True)
+            ]
             query = Q(category_id__in=descendants_id_list)
 
         products = Product.objects.filter(query)

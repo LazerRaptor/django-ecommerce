@@ -1,3 +1,5 @@
+from django.db.models import Q
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext_lazy as _
@@ -6,9 +8,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from .models import Basket, ProductArray
-from .serializers import BasketSerializer, ProductArraySerializer
+from .serializers import BasketSerializer, ProductArraySerializer, Product
 
 
+# FIXME: These views are screaming for refactoring. 
+# TODO: Add tests, they are needed here.
 
 class BasketUnknownAPIView(APIView):
     '''
@@ -23,13 +27,13 @@ class BasketUnknownAPIView(APIView):
         if user.is_authenticated:
             qs = user.baskets.filter(status='open')
             obj = qs.order_by('-updated').first()
+            if obj is None:
+                obj = Basket.objects.create(owner_id=user.id)
             serializer = BasketSerializer(obj)
         else:
-            data = {"owner": None}
-            serializer = BasketSerializer(data=data)
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-        
+            obj = Basket.objects.create(owner=None)
+            serializer = BasketSerializer(obj)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
         
 
@@ -55,14 +59,15 @@ class BasketUUIDAPIView(APIView):
 
     def delete(self, request, uuid, format=None):
         obj = get_object_or_404(Basket.objects.all(), id=uuid)
-        data = BasketSerializer(obj).data 
         obj.delete()
-
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
         
 
-
+# FIXME: terrible name
 class ProductArrayDetailAPIView(APIView):
+    '''
+    Manage a single ProductArray instance
+    '''
     allowed_methods = ['PUT', 'DELETE']
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     
@@ -80,22 +85,69 @@ class ProductArrayDetailAPIView(APIView):
             ProductArray.objects.all(),
             id=id
         )
-        string_repr = obj.__str__()
         obj.delete()
-        data = _('{} has been removed'.format(string_repr))
-
-        return Response(data=data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-
+# FIXME: terrible name
+# TODO: Need tests
 class ProductArrayListAPIView(APIView):
     '''
-    Get product arrays associated with a given basket.
+    Get a list of ProductArray instances associated with a given basket.
     '''
-    allowed_methods = ['GET',]
+    allowed_methods = ['GET', 'POST']
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
-    def get(self, request, uuid, format=None):
+    def get(self, request, format=None):
+        uuid = request.data.get('uuid')
+        if uuid is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
         qs = ProductArray.objects.filter(basket_id=uuid)
         serializer = ProductArraySerializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @transaction.atomic
+    def post(self, request, format=None):
+        user = request.user if request.user.is_authenticated else None
+        basket_id = request.data.get('basket') 
+        product_id = request.data.get('product')
+
+        if product_id is None:
+            return Response(_('ID for Product instance is not provided'), status=status.HTTP_400_BAD_REQUEST)
+        
+        if basket_id is None:
+            basket = Basket.objects.create(owner=user)
+            basket_id = basket.id
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response(
+                data=_('Product not found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            basket = Basket.objects.get(id=basket_id)
+        except Basket.DoesNotExist:
+            return Response(
+                data=_('Basket is not found, whats going on?'), 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # check if item has already been added
+        if ProductArray.objects.filter(
+            Q(product=product_id) & Q(basket=basket_id)).exists():
+            return Response(data=_('This item is already in the cart'), status=status.HTTP_200_OK)
+
+        data = {
+            'basket': basket_id, 
+            'product': product_id, 
+        }
+        serializer = ProductArraySerializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+           
