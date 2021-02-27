@@ -42,20 +42,20 @@ class BasketUUIDAPIView(APIView):
     '''
     Handles the case when UUID is provided
     '''
-    # TODO: Does it need permission classes? 
+    # TODO: add nested arrays of products to serialized carts 
     allowed_methods = ['GET', 'DELETE']
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, uuid, format=None):
-        user = request.user
+        user = request.user if request.user.is_authenticated else None
         obj = get_object_or_404(Basket.objects.all(), id=uuid)
         
         if obj.owner is not None and obj.owner != request.user:
             raise PermissionDenied
         
-        serializer = BasketSerializer(obj)
+        qs = ProductArray.objects.filter(basket_id=uuid)
+        serializer = ProductArraySerializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
     def delete(self, request, uuid, format=None):
         obj = get_object_or_404(Basket.objects.all(), id=uuid)
@@ -95,17 +95,10 @@ class ProductArrayListAPIView(APIView):
     '''
     Get a list of ProductArray instances associated with a given basket.
     '''
-    allowed_methods = ['GET', 'POST']
+    allowed_methods = ['POST',]
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
-    def get(self, request, format=None):
-        uuid = request.data.get('uuid')
-        if uuid is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        qs = ProductArray.objects.filter(basket_id=uuid)
-        serializer = ProductArraySerializer(qs, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
     
     @transaction.atomic
     def post(self, request, format=None):

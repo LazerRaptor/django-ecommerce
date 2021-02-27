@@ -25,4 +25,5 @@ class ProductArraySerializer(serializers.ModelSerializer):
             'quantity'
         )
         read_only_fields = ('id',)
+        depth = 1
 

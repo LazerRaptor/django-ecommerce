@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import (BasketUnknownAPIView, BasketUUIDAPIView, ProductArrayDetailAPIView, ProductArrayListAPIView)
+from rest_framework.urlpatterns import format_suffix_patterns
+from .views import (
+    BasketUnknownAPIView, BasketUUIDAPIView, 
+    ProductArrayDetailAPIView, ProductArrayListAPIView)
 
 
 
@@ -9,3 +12,5 @@ urlpatterns = [
     path('basket/items/', ProductArrayListAPIView.as_view()),
     path('basket/items/<int:id>/', ProductArrayDetailAPIView.as_view()),
 ]
+
+urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json', 'html'])

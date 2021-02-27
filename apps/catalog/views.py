@@ -10,7 +10,7 @@ from django_filters import rest_framework as filters
 from .serializers import (
     ProductSerializer, CategorySerializer, ProductSlugSerializer) 
 
-
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 class ProductFilter(filters.FilterSet):
     min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
@@ -63,7 +63,8 @@ class CategoryTreeView(APIView):
     Returns all categories as a tree view
     '''
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
-    
+    permission_classes = [IsAuthenticatedOrReadOnly,]
+
     @staticmethod
     def build_tree(nodes):
         # FIXME: This is terrible
@@ -95,7 +96,7 @@ class CategoryTreeView(APIView):
         queryset = Category.objects.all()
         serializer = CategorySerializer(queryset, many=True)
         tree = self.build_tree(serializer.data)
-        return Response(tree)
+        return Response(tree, status=status.HTTP_200_OK)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
