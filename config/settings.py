@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     # internal apps
     'accounts',
     'basket',
-    'checkout',
     'catalog',
     'warehouse',
 ]

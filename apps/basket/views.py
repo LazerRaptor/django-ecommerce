@@ -2,145 +2,104 @@ from django.db.models import Q
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.utils.translation import gettext_lazy as _
+from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
-from .models import Basket, ProductArray
-from .serializers import BasketSerializer, ProductArraySerializer, Product
+
+from .models import Basket, BasketLine
+from .serializers import (
+    BasketSerializer, BasketWritableNestedSerializer, BasketLineSerializer)
 
 
-# FIXME: These views are screaming for refactoring. 
-# TODO: Add tests, they are needed here.
 
-class BasketUnknownAPIView(APIView):
+class BasketAPIView(GenericAPIView):
     '''
-    Attempt to get the most recent basket for an authenticated user, 
-    if fails create a new one.
+    Retrieve a basket by id and manipulate with its containing items.
+    The containing items are BasketLine model instances. 
+    We can use IDs of Product model instances to identify related BasketLine
+    instances as they are unique.
     '''
-    allowed_methods = ['GET',]
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    lookup_field = 'id'
+    serializer_class = BasketSerializer
+    queryset = Basket.objects.all()       
 
-    def get(self, request, format=None):
-        user = request.user
-        if user.is_authenticated:
-            qs = user.baskets.filter(status='open')
-            obj = qs.order_by('-updated').first()
-            if obj is None:
-                obj = Basket.objects.create(owner_id=user.id)
-            serializer = BasketSerializer(obj)
-        else:
-            obj = Basket.objects.create(owner=None)
-            serializer = BasketSerializer(obj)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-        
-
-
-class BasketUUIDAPIView(APIView):
-    '''
-    Handles the case when UUID is provided
-    '''
-    # TODO: add nested arrays of products to serialized carts 
-    allowed_methods = ['GET', 'DELETE']
-    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
-
-    def get(self, request, uuid, format=None):
-        user = request.user if request.user.is_authenticated else None
-        obj = get_object_or_404(Basket.objects.all(), id=uuid)
-        
+    def check_object_permissions(self, request, obj):
         if obj.owner is not None and obj.owner != request.user:
             raise PermissionDenied
-        
-        qs = ProductArray.objects.filter(basket_id=uuid)
-        serializer = ProductArraySerializer(qs, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        super().check_object_permissions(request, obj)
 
-    def delete(self, request, uuid, format=None):
-        obj = get_object_or_404(Basket.objects.all(), id=uuid)
-        obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-        
-
-# FIXME: terrible name
-class ProductArrayDetailAPIView(APIView):
-    '''
-    Manage a single ProductArray instance
-    '''
-    allowed_methods = ['PUT', 'DELETE']
-    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    def get_serializer_class(self):
+        if self.request.method == 'PUT' or self.request.method == 'POST':
+            return BasketWritableNestedSerializer
+        return super().get_serializer_class()
     
-    def put(self, request, id, format=None):
-        quantity = request.data.get('qty', 1)
-        obj = get_object_or_404(ProductArray.objects.all(), id=id)
-        serializer = ProductArraySerializer(instance=obj, data={"quantity": quantity})
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def delete(self, request, id, format=None):
-        obj = get_object_or_404(
-            ProductArray.objects.all(),
-            id=id
-        )
-        obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# FIXME: terrible name
-# TODO: Need tests
-class ProductArrayListAPIView(APIView):
-    '''
-    Get a list of ProductArray instances associated with a given basket.
-    '''
-    allowed_methods = ['POST',]
-    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
-
-
+    def get(self, request, *args, **kwargs):
+        '''
+        Get basket object.
+        '''
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
     
-    @transaction.atomic
-    def post(self, request, format=None):
-        user = request.user if request.user.is_authenticated else None
-        basket_id = request.data.get('basket') 
+    def post(self, request, *args, **kwargs):
+        '''
+        Add item to the basket.
+        '''
+        basket = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(basket=basket)
+        return Response(serializer.data)
+
+    def delete(self, request, *args, **kwargs):
+        ''' 
+        Delete item from the basket.
+        '''
+        basket_id = kwargs.pop('id')
         product_id = request.data.get('product')
+        instance = get_object_or_404(
+            BasketLine, 
+            basket_id=basket_id, 
+            product_id=product_id
+        )
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if product_id is None:
-            return Response(_('ID for Product instance is not provided'), status=status.HTTP_400_BAD_REQUEST)
-        
-        if basket_id is None:
-            basket = Basket.objects.create(owner=user)
-            basket_id = basket.id
+    def put(self, request, *args, **kwargs):
+        '''
+        Update quantity for the item.
+        '''
+        product_id=request.data.get('product')
+        basket = self.get_object()
+        instance = get_object_or_404(basket.items.all(), product_id=product_id)
+        serializer = self.get_serializer(
+            instance=instance, 
+            data={'quantity': request.data.get('quantity')},
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response(
-                data=_('Product not found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
 
-        try:
-            basket = Basket.objects.get(id=basket_id)
-        except Basket.DoesNotExist:
-            return Response(
-                data=_('Basket is not found, whats going on?'), 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
-        # check if item has already been added
-        if ProductArray.objects.filter(
-            Q(product=product_id) & Q(basket=basket_id)).exists():
-            return Response(data=_('This item is already in the cart'), status=status.HTTP_200_OK)
+class CreateBasketAPIView(APIView):
+    '''
+    Give user a new empty basket. 
+    '''
+    serializer_class = BasketSerializer
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
-        data = {
-            'basket': basket_id, 
-            'product': product_id, 
-        }
-        serializer = ProductArraySerializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-           
+    def post(self, request): 
+        user = request.user
+        if user.is_anonymous:
+            user = None
+        serializer = get_serializer(data={'owner': user})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return serializer.data

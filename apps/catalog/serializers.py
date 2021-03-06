@@ -35,18 +35,6 @@ class ProductSerializer(serializers.ModelSerializer):
         )
 
 
-class NestedProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product 
-        fields = (
-            'id',
-            'title',
-            'slug',
-            'price',
-            'description'
-        )
-
-
 
 class ProductSlugSerializer(serializers.Serializer):
     slug = serializers.SlugField(allow_blank=False)
@@ -56,5 +44,10 @@ class ProductSlugSerializer(serializers.Serializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ('id', 'title', 'slug', 'parent')
+        fields = (
+            'id', 
+            'title', 
+            'slug', 
+            'parent'
+        )
     

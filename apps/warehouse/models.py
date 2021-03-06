@@ -32,14 +32,6 @@ class StockRecord(TimeStampedModel):
         related_name='stockrecords',
         verbose_name=_('supplier')
     )
-    basket = models.ForeignKey(
-        'basket.Basket',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='stockrecords',
-        verbose_name=_('basket')
-    )
     product = models.ForeignKey(
         'catalog.Product',
         on_delete=models.CASCADE,
@@ -56,25 +48,9 @@ class StockRecord(TimeStampedModel):
     class Meta:
         verbose_name = _('Stock Record')
         verbose_name_plural = _('Stock Records')
-        constraints = [
-            models.CheckConstraint(
-                check=(
-                    models.Q(
-                        basket__isnull=True,
-                        supplier__isnull=False,
-                        delta__gt=0
-                    ) | models.Q(
-                        basket__isnull=False,
-                        supplier__isnull=True,
-                        delta__lt=0
-                    )
-                ),
-                name='mutual_exclusion'
-            ),
-        ]
 
     def __str__(self):
-        return f'{self.content_object} ({self.delta})'
+        return f'{self.product.title} ({self.delta})'
 
 
 

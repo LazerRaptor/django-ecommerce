@@ -24,7 +24,6 @@ urlpatterns = [
     path('api/', include('basket.urls')),
     path('auth/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.authtoken')),
-    path('api/payments/', include('checkout.urls')),
 ]
 
 
